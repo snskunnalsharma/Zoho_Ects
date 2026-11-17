@@ -1,0 +1,8 @@
+node_modules/
+.catalyst/
+.output/
+.env
+*.log
+.node20/
+PRODUCTION_ENV_VARS.txt
+function/

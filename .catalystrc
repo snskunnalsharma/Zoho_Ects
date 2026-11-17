@@ -1,0 +1,29 @@
+{
+  "defaults": {
+    "project": 1
+  },
+  "actives": {
+    "project": 1,
+    "env": 1
+  },
+  "projects": [
+    {
+      "idx": 1,
+      "id": "104896000000014051",
+      "name": "AgencyPortal",
+      "domain": {
+        "id": "10133676166",
+        "name": "agencyportal-938221818.development"
+      },
+      "timezone": "America/Regina",
+      "env": [
+        {
+          "idx": 1,
+          "id": "938221818",
+          "name": "Development",
+          "type": 3
+        }
+      ]
+    }
+  ]
+}

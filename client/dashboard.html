@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eagle Creek Therapy Services — Dashboard</title>
+  <link rel="icon" type="image/png" href="assets/ects-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="main.css" />
+</head>
+
+<body class="page-dashboard">
+  <header class="topbar">
+    <div class="brand-mark">
+      <a href="dashboard.html" style="display: flex; align-items: center;" title="Eagle Creek Therapy Services">
+        <img src="assets/ects-logo.png" alt="Eagle Creek Therapy Services" />
+      </a>
+    </div>
+
+    <nav class="portal-nav-tabs" aria-label="Portal Navigation">
+      <a class="nav-tab-item active" href="dashboard.html">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="12" y1="18" x2="12" y2="12"></line>
+          <line x1="9" y1="15" x2="15" y2="15"></line>
+        </svg>
+        Referral Form
+      </a>
+      <a class="nav-tab-item" href="patients-detail.html">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        Patient Details
+      </a>
+      <a class="nav-tab-item" href="therapist-detail.html">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        Therapist Details
+      </a>
+    </nav>
+
+    <div class="topbar-actions">
+      <span class="state-msg topbar-status" id="loading-state">Loading…</span>
+      <span class="state-msg error topbar-status" id="error-state" hidden></span>
+      <button class="btn btn-ghost btn-sm" type="button" id="open-change-password-btn">Change Password</button>
+      <a class="btn btn-ghost btn-sm" href="/server/agency_api/auth/logout">Sign Out</a>
+    </div>
+  </header>
+
+  <main class="dashboard-main dashboard-main-form">
+    <section class="form-section" aria-label="Patient Referral Form">
+      <div class="form-frame-wrap">
+        <iframe id="zoho-form" title="Patient Referral Form" aria-label="Patient Referral Form" frameborder="0"
+          style="height:600px;width:99%;border:none;" src="about:blank" loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+      <p class="form-fallback" id="form-fallback" hidden>
+        Form URL is not configured yet. Set
+        <code>ZOHO_FORM_EMBED_URL</code> in
+        <code>.env</code>.
+      </p>
+    </section>
+  </main>
+
+  <!-- Change Password Modal -->
+  <div class="modal-backdrop" id="password-modal" hidden>
+    <div class="modal-card" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+      <div class="modal-header">
+        <h2 id="modal-title" class="modal-title">Change Password</h2>
+        <button type="button" class="modal-close" id="close-modal-btn" aria-label="Close modal">&times;</button>
+      </div>
+      <form id="change-password-form" class="auth-form" novalidate>
+        <label class="field">
+          <span>Current Password</span>
+          <div class="password-field">
+            <input type="password" id="current-password" required placeholder="Enter current password" />
+            <button type="button" class="password-toggle" id="toggle-current-pass" aria-label="Show password"
+              aria-pressed="false">Show</button>
+          </div>
+        </label>
+        <label class="field">
+          <span>New Password</span>
+          <div class="password-field">
+            <input type="password" id="modal-new-password" required placeholder="At least 6 characters" />
+            <button type="button" class="password-toggle" id="toggle-modal-new-pass" aria-label="Show password"
+              aria-pressed="false">Show</button>
+          </div>
+        </label>
+        <label class="field">
+          <span>Confirm New Password</span>
+          <div class="password-field">
+            <input type="password" id="modal-confirm-password" required placeholder="Re-enter new password" />
+            <button type="button" class="password-toggle" id="toggle-modal-confirm-pass" aria-label="Show password"
+              aria-pressed="false">Show</button>
+          </div>
+        </label>
+        <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1.25rem;">
+          <button type="button" class="btn btn-ghost" id="cancel-modal-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="save-password-btn">Update Password</button>
+        </div>
+        <p class="success-banner" id="modal-success-banner" hidden></p>
+        <p class="error-banner" id="modal-error-banner" hidden></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+
+</html>

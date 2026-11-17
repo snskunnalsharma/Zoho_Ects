@@ -1,0 +1,13 @@
+{
+  "name": "agency_api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "agency-portal",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.4.2",
+    "express": "^4.21.2",
+    "zcatalyst-sdk-node": "latest"
+  }
+}

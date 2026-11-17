@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "targets": ["agency_api"],
+    "ignore": ["node_modules", ".git", ".output"],
+    "source": "functions"
+  },
+  "client": {
+    "source": "client"
+  }
+}

@@ -1,0 +1,274 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eagle Creek Therapy Services — Therapist Detail</title>
+    <link rel="icon" type="image/png" href="assets/ects-logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body class="page-dashboard">
+    <header class="topbar">
+      <div class="brand-mark">
+        <a href="dashboard.html" style="display: flex; align-items: center;" title="Eagle Creek Therapy Services">
+          <img
+            src="assets/ects-logo.png"
+            alt="Eagle Creek Therapy Services"
+          />
+        </a>
+      </div>
+
+      <nav class="portal-nav-tabs" aria-label="Portal Navigation">
+        <a class="nav-tab-item" href="dashboard.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+          Referral Form
+        </a>
+        <a class="nav-tab-item" href="patients-detail.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          Patient Details
+        </a>
+        <a class="nav-tab-item active" href="therapist-detail.html">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          Therapist Details
+        </a>
+      </nav>
+
+      <div class="topbar-actions">
+        <a class="btn btn-ghost btn-sm" href="/server/agency_api/auth/logout">Sign Out</a>
+      </div>
+    </header>
+
+    <main class="patients-main">
+      <div class="patients-header-wrap">
+        <div>
+          <p class="auth-kicker">Agency Portal</p>
+          <h1 class="page-title">Therapist Details</h1>
+          <p class="section-lede">
+            Certified therapists in your agency's care network from Zoho CRM.
+          </p>
+        </div>
+        <div class="header-action-group">
+          <button class="btn btn-outline" id="send-credentials-btn" type="button" title="Select therapists from the list to send credentials">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <span>Send Credentials</span>
+            <span class="selection-badge" id="selected-badge" hidden>0</span>
+          </button>
+          <button class="btn btn-ghost" id="refresh-btn" type="button" title="Refresh therapist data">
+            <svg class="refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 4v6h-6"></path>
+              <path d="M1 20v-6h6"></path>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+
+      
+      <div class="stats-grid">
+        <div class="stat-card stat-blue">
+          <div class="stat-card-header">
+            <span class="stat-label">Total Therapists</span>
+            <div class="stat-icon-badge" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <polyline points="16 11 18 13 22 9"></polyline>
+              </svg>
+            </div>
+          </div>
+          <span class="stat-value" id="stat-total">—</span>
+          <svg class="stat-watermark" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <polyline points="16 11 18 13 22 9"></polyline>
+          </svg>
+        </div>
+
+        <div class="stat-card stat-emerald">
+          <div class="stat-card-header">
+            <span class="stat-label">Physical Therapy (PT/PTA)</span>
+            <div class="stat-icon-badge" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+            </div>
+          </div>
+          <span class="stat-value text-active" id="stat-pt">—</span>
+          <svg class="stat-watermark" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </div>
+
+        <div class="stat-card stat-purple">
+          <div class="stat-card-header">
+            <span class="stat-label">Occupational<br> (OT / COTA)</span>
+            <div class="stat-icon-badge" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+            </div>
+          </div>
+          <span class="stat-value text-purple" id="stat-ot">—</span>
+          <svg class="stat-watermark" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+          </svg>
+        </div>
+
+        <div class="stat-card stat-teal">
+          <div class="stat-card-header">
+            <span class="stat-label">Speech Therapy<br> (ST / SLP)</span>
+            <div class="stat-icon-badge" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+          </div>
+          <span class="stat-value text-teal" id="stat-st">—</span>
+          <svg class="stat-watermark" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+      </div>
+
+
+      
+      <div class="table-controls">
+        <div class="search-input-wrap">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            id="search-input"
+            class="search-input"
+            placeholder="Search by therapist name, email, phone, city, or zip…"
+          />
+        </div>
+
+        <div class="filter-wrap">
+          <select id="discipline-filter" class="select-filter">
+            <option value="ALL">All Disciplines</option>
+            <option value="PT">PT (Physical Therapist)</option>
+            <option value="PTA">PTA (Physical Therapist Assistant)</option>
+            <option value="OT">OT (Occupational Therapist)</option>
+            <option value="COTA">COTA (Occupational Therapy Assistant)</option>
+            <option value="ST">ST / SLP (Speech Therapist)</option>
+            <option value="MSW">MSW (Medical Social Worker)</option>
+          </select>
+        </div>
+      </div>
+
+
+      
+      <div class="table-container">
+
+        
+        <div class="table-state loading-state" id="table-loading">
+          <div class="spinner"></div>
+          <p>Loading therapist records from Zoho CRM…</p>
+        </div>
+
+
+        
+        <div class="table-state error-state" id="table-error" hidden>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--danger);">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <p id="error-message">Failed to load therapist records.</p>
+          <button class="btn btn-ghost btn-sm" id="retry-btn" type="button">Try Again</button>
+        </div>
+
+
+        
+        <div class="table-state empty-state" id="table-empty" hidden>
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color: var(--cyan);">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <h3>No therapist records found</h3>
+          <p>Therapist records associated with your agency will appear here automatically.</p>
+        </div>
+
+
+        
+        <div class="table-responsive" id="table-wrapper" hidden>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="th-checkbox">
+                  <input type="checkbox" id="select-all-therapists" class="custom-checkbox" aria-label="Select all therapists on this page" />
+                </th>
+                <th>Therapist Name</th>
+                <th>Discipline</th>
+                <th>Email Address</th>
+                <th>Phone Number</th>
+                <th>City / State / Zip</th>
+                <th>Mailing Address</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="therapist-tbody">
+
+              
+            </tbody>
+          </table>
+        </div>
+
+
+        
+        <div class="pagination-container" id="pagination-container" hidden>
+          <div class="pagination-info" id="pagination-info">
+            Showing <span id="page-start">1</span>–<span id="page-end">50</span> of <span id="page-total-count">0</span> records
+          </div>
+          <div class="pagination-actions">
+            <button class="pagination-btn" id="first-page-btn" type="button" title="First page" aria-label="First page">&laquo;</button>
+            <button class="pagination-btn" id="prev-page-btn" type="button" title="Previous page" aria-label="Previous page">&lsaquo; Prev</button>
+            <div class="pagination-pages" id="pagination-pages"></div>
+            <button class="pagination-btn" id="next-page-btn" type="button" title="Next page" aria-label="Next page">Next &rsaquo;</button>
+            <button class="pagination-btn" id="last-page-btn" type="button" title="Last page" aria-label="Last page">&raquo;</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+
+    
+    <div class="modal-backdrop action-popup-backdrop" id="action-alert" hidden>
+      <div class="action-popup-card" role="dialog" aria-modal="true" aria-labelledby="action-alert-text">
+        <button type="button" class="action-popup-close" id="action-alert-close" aria-label="Close notification">&times;</button>
+        <div class="action-popup-content" id="action-alert-text"></div>
+      </div>
+    </div>
+
+    <script src="therapist-detail.js"></script>
+  </body>
+</html> -->

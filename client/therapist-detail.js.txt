@@ -1,0 +1,798 @@
+// (function () {
+//   const API_ME = "/server/agency_api/api/me";
+//   const API_THERAPISTS = "/server/agency_api/api/therapists";
+//   const API_SEND_CREDENTIALS = "/server/agency_api/api/therapists/send-credentials";
+//   const PAGE_SIZE = 50;
+
+//   const tableLoading = document.getElementById("table-loading");
+//   const tableError = document.getElementById("table-error");
+//   const tableEmpty = document.getElementById("table-empty");
+//   const tableWrapper = document.getElementById("table-wrapper");
+//   const tbody = document.getElementById("therapist-tbody");
+//   const errorMessage = document.getElementById("error-message");
+
+//   const statTotal = document.getElementById("stat-total");
+//   const statPt = document.getElementById("stat-pt");
+//   const statOt = document.getElementById("stat-ot");
+//   const statSt = document.getElementById("stat-st");
+
+//   const searchInput = document.getElementById("search-input");
+//   const disciplineFilter = document.getElementById("discipline-filter");
+//   const refreshBtn = document.getElementById("refresh-btn");
+//   const retryBtn = document.getElementById("retry-btn");
+
+//   // Selection & Action elements
+//   const sendCredentialsBtn = document.getElementById("send-credentials-btn");
+//   const selectedBadge = document.getElementById("selected-badge");
+//   const selectAllCheckbox = document.getElementById("select-all-therapists");
+//   const actionAlert = document.getElementById("action-alert");
+//   const actionAlertText = document.getElementById("action-alert-text");
+//   const actionAlertClose = document.getElementById("action-alert-close");
+
+//   // Pagination elements
+//   const paginationContainer = document.getElementById("pagination-container");
+//   const pageStart = document.getElementById("page-start");
+//   const pageEnd = document.getElementById("page-end");
+//   const pageTotalCount = document.getElementById("page-total-count");
+//   const paginationPages = document.getElementById("pagination-pages");
+//   const firstPageBtn = document.getElementById("first-page-btn");
+//   const prevPageBtn = document.getElementById("prev-page-btn");
+//   const nextPageBtn = document.getElementById("next-page-btn");
+//   const lastPageBtn = document.getElementById("last-page-btn");
+
+//   let allTherapists = [];
+//   let currentFiltered = [];
+//   let currentPage = 1;
+//   const selectedTherapistIds = new Set();
+//   let alertTimer = null;
+
+//   function escapeHtml(str) {
+//     if (!str) return "";
+//     return String(str)
+//       .replace(/&/g, "&amp;")
+//       .replace(/</g, "&lt;")
+//       .replace(/>/g, "&gt;")
+//       .replace(/"/g, "&quot;")
+//       .replace(/'/g, "&#039;");
+//   }
+
+//   function showAlert(type, content, isHtml = false, duration = null) {
+//     if (!actionAlert || !actionAlertText) return;
+//     if (alertTimer) {
+//       clearTimeout(alertTimer);
+//       alertTimer = null;
+//     }
+
+//     if (isHtml) {
+//       actionAlertText.innerHTML = content;
+//     } else {
+//       const isSuccess = type === "success";
+//       actionAlertText.innerHTML = `
+//         <div class="toast-section">
+//           <div class="toast-header-row" style="align-items: flex-start; gap: 0.65rem;">
+//             <span class="toast-header-icon ${isSuccess ? "toast-header-icon-success" : "toast-header-icon-error"}" style="margin-top: 2px;">
+//               ${isSuccess
+//           ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="16 9 10 15 7 12"></polyline></svg>`
+//           : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
+//         }
+//             </span>
+//             <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+//               <span class="toast-header-title" style="font-weight: 600; font-size: 0.92rem; line-height: 1.45; color: #1e293b;">${escapeHtml(content)}</span>
+//             </div>
+//           </div>
+//         </div>
+//       `;
+//     }
+
+//     actionAlert.hidden = false;
+
+//     if (duration && typeof duration === "number" && duration > 0) {
+//       alertTimer = setTimeout(hideAlert, duration);
+//     }
+//   }
+
+//   function hideAlert() {
+//     if (actionAlert) actionAlert.hidden = true;
+//     if (alertTimer) {
+//       clearTimeout(alertTimer);
+//       alertTimer = null;
+//     }
+//   }
+
+//   function getDisciplineClass(disc) {
+//     const d = (disc || "").toUpperCase();
+//     if (d.includes("PT") || d.includes("PTA")) return "disc-badge disc-pt";
+//     if (d.includes("OT") || d.includes("COTA")) return "disc-badge disc-ot";
+//     if (d.includes("ST") || d.includes("SLP")) return "disc-badge disc-st";
+//     if (d.includes("MSW") || d.includes("SOCIAL")) return "disc-badge disc-msw";
+//     return "disc-badge";
+//   }
+
+//   function getStatusClass(status) {
+//     const s = (status || "").toLowerCase();
+//     if (s === "active" || s === "approved") return "status-badge badge-active";
+//     if (s.includes("onboard") || s === "pending") return "status-badge badge-pending";
+//     if (s === "inactive" || s === "terminated") return "status-badge badge-danger";
+//     return "status-badge badge-default";
+//   }
+
+//   function getCurrentPageTherapists() {
+//     const startIndex = (currentPage - 1) * PAGE_SIZE;
+//     return currentFiltered.slice(startIndex, startIndex + PAGE_SIZE);
+//   }
+
+//   function updateSelectionUI() {
+//     const totalSelected = selectedTherapistIds.size;
+
+//     // Update Send Credentials button & badge (always visible)
+//     if (selectedBadge) {
+//       selectedBadge.textContent = totalSelected;
+//       selectedBadge.hidden = totalSelected === 0;
+//     }
+
+//     if (sendCredentialsBtn) {
+//       sendCredentialsBtn.hidden = false;
+//       sendCredentialsBtn.disabled = false;
+//       sendCredentialsBtn.title =
+//         totalSelected > 0
+//           ? `Send credentials for ${totalSelected} selected therapist${totalSelected === 1 ? "" : "s"}`
+//           : "Select therapists from the list to send credentials";
+
+//       if (totalSelected > 0) {
+//         sendCredentialsBtn.classList.remove("btn-outline");
+//         sendCredentialsBtn.classList.add("btn-primary");
+//       } else {
+//         sendCredentialsBtn.classList.remove("btn-primary");
+//         sendCredentialsBtn.classList.add("btn-outline");
+//       }
+//     }
+
+
+//     // Update row highlighting and checkboxes
+//     if (tbody) {
+//       const rows = tbody.querySelectorAll("tr");
+//       rows.forEach((row) => {
+//         const checkbox = row.querySelector(".therapist-row-checkbox");
+//         if (checkbox) {
+//           const id = checkbox.getAttribute("data-id");
+//           const isSelected = selectedTherapistIds.has(id);
+//           checkbox.checked = isSelected;
+//           row.classList.toggle("row-selected", isSelected);
+//         }
+//       });
+//     }
+
+//     // Update Select All checkbox state for current page
+//     if (selectAllCheckbox) {
+//       const pageTherapists = getCurrentPageTherapists();
+//       if (pageTherapists.length === 0) {
+//         selectAllCheckbox.checked = false;
+//         selectAllCheckbox.indeterminate = false;
+//       } else {
+//         const selectedOnPage = pageTherapists.filter((t) =>
+//           selectedTherapistIds.has(t.id)
+//         ).length;
+
+//         if (selectedOnPage === pageTherapists.length) {
+//           selectAllCheckbox.checked = true;
+//           selectAllCheckbox.indeterminate = false;
+//         } else if (selectedOnPage > 0) {
+//           selectAllCheckbox.checked = false;
+//           selectAllCheckbox.indeterminate = true;
+//         } else {
+//           selectAllCheckbox.checked = false;
+//           selectAllCheckbox.indeterminate = false;
+//         }
+//       }
+//     }
+//   }
+
+//   function renderTableRows(list) {
+//     if (!tbody) return;
+//     tbody.innerHTML = list
+//       .map((t) => {
+//         const discClass = getDisciplineClass(t.discipline);
+//         const statusClass = getStatusClass(t.status);
+//         const isSelected = selectedTherapistIds.has(t.id);
+//         const cityStateZip = [
+//           t.city !== "—" ? t.city : "",
+//           t.state !== "—" ? t.state : "",
+//           t.zip !== "—" ? t.zip : "",
+//         ]
+//           .filter(Boolean)
+//           .join(", ") || "—";
+
+//         const emailLink = t.email && t.email !== "—"
+//           ? `<a class="text-link" href="mailto:${escapeHtml(t.email)}">${escapeHtml(t.email)}</a>`
+//           : `<span class="text-muted">—</span>`;
+
+//         const phoneLink = t.phone && t.phone !== "—"
+//           ? `<a class="phone-link" href="tel:${escapeHtml(t.phone)}">${escapeHtml(t.phone)}</a>`
+//           : `<span class="text-muted">—</span>`;
+
+//         return `
+//           <tr class="${isSelected ? "row-selected" : ""}">
+//             <td class="td-checkbox">
+//               <input
+//                 type="checkbox"
+//                 class="custom-checkbox therapist-row-checkbox"
+//                 data-id="${escapeHtml(t.id)}"
+//                 aria-label="Select ${escapeHtml(t.name)}"
+//                 ${isSelected ? "checked" : ""}
+//               />
+//             </td>
+//             <td>
+//               <div class="patient-name-cell">
+//                 <div class="patient-avatar">${escapeHtml(t.name.charAt(0).toUpperCase())}</div>
+//                 <div>
+//                   <div class="patient-name">${escapeHtml(t.name)}</div>
+//                 </div>
+//               </div>
+//             </td>
+//             <td>
+//               <span class="${discClass}">${escapeHtml(t.discipline)}</span>
+//             </td>
+//             <td>
+//               ${emailLink}
+//             </td>
+//             <td>
+//               ${phoneLink}
+//             </td>
+//             <td>
+//               <div><strong>${escapeHtml(cityStateZip)}</strong></div>
+//             </td>
+//             <td class="address-cell">
+//               <span>${escapeHtml(t.address)}</span>
+//             </td>
+//             <td>
+//               <span class="${statusClass}">${escapeHtml(t.status || t.layout || "Active")}</span>
+//             </td>
+//           </tr>
+//         `;
+//       })
+//       .join("");
+
+//     // Attach row checkbox event listeners
+//     tbody.querySelectorAll(".therapist-row-checkbox").forEach((cb) => {
+//       cb.addEventListener("change", (e) => {
+//         const id = e.target.getAttribute("data-id");
+//         if (e.target.checked) {
+//           selectedTherapistIds.add(id);
+//         } else {
+//           selectedTherapistIds.delete(id);
+//         }
+//         updateSelectionUI();
+//       });
+//     });
+
+//     updateSelectionUI();
+//   }
+
+//   function renderPagination(totalItems) {
+//     if (!paginationContainer) return;
+
+//     if (totalItems === 0) {
+//       paginationContainer.hidden = true;
+//       return;
+//     }
+
+//     paginationContainer.hidden = false;
+//     const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+
+//     if (currentPage > totalPages) {
+//       currentPage = totalPages;
+//     } else if (currentPage < 1) {
+//       currentPage = 1;
+//     }
+
+//     const start = (currentPage - 1) * PAGE_SIZE + 1;
+//     const end = Math.min(currentPage * PAGE_SIZE, totalItems);
+
+//     if (pageStart) pageStart.textContent = start;
+//     if (pageEnd) pageEnd.textContent = end;
+//     if (pageTotalCount) pageTotalCount.textContent = totalItems;
+
+//     if (firstPageBtn) firstPageBtn.disabled = currentPage === 1;
+//     if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
+//     if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages;
+//     if (lastPageBtn) lastPageBtn.disabled = currentPage === totalPages;
+
+//     if (paginationPages) {
+//       paginationPages.innerHTML = "";
+//       const pageNumbers = getPaginationPages(currentPage, totalPages);
+
+//       pageNumbers.forEach((item) => {
+//         if (item === "...") {
+//           const ellipsis = document.createElement("span");
+//           ellipsis.className = "pagination-ellipsis";
+//           ellipsis.textContent = "…";
+//           paginationPages.appendChild(ellipsis);
+//         } else {
+//           const btn = document.createElement("button");
+//           btn.type = "button";
+//           btn.className = `pagination-btn ${item === currentPage ? "active" : ""}`;
+//           btn.textContent = item;
+//           btn.setAttribute("aria-label", `Page ${item}`);
+//           btn.addEventListener("click", () => goToPage(item));
+//           paginationPages.appendChild(btn);
+//         }
+//       });
+//     }
+//   }
+
+//   function getPaginationPages(current, total) {
+//     if (total <= 7) {
+//       return Array.from({ length: total }, (_, i) => i + 1);
+//     }
+
+//     const pages = [];
+//     pages.push(1);
+
+//     if (current > 3) {
+//       pages.push("...");
+//     }
+
+//     const start = Math.max(2, current - 1);
+//     const end = Math.min(total - 1, current + 1);
+
+//     for (let i = start; i <= end; i++) {
+//       pages.push(i);
+//     }
+
+//     if (current < total - 2) {
+//       pages.push("...");
+//     }
+
+//     pages.push(total);
+//     return pages;
+//   }
+
+//   function goToPage(page) {
+//     const totalPages = Math.max(1, Math.ceil(currentFiltered.length / PAGE_SIZE));
+//     if (page < 1 || page > totalPages || page === currentPage) return;
+//     currentPage = page;
+//     renderCurrentPage();
+
+//     if (tableWrapper) {
+//       tableWrapper.scrollIntoView({ behavior: "smooth", block: "nearest" });
+//     }
+//   }
+
+//   function renderCurrentPage() {
+//     if (!tableWrapper || !tbody) return;
+
+//     if (!currentFiltered || currentFiltered.length === 0) {
+//       tableWrapper.hidden = true;
+//       if (paginationContainer) paginationContainer.hidden = true;
+//       if (tableEmpty) tableEmpty.hidden = false;
+//       updateSelectionUI();
+//       return;
+//     }
+
+//     if (tableEmpty) tableEmpty.hidden = true;
+//     tableWrapper.hidden = false;
+
+//     const pageTherapists = getCurrentPageTherapists();
+//     renderTableRows(pageTherapists);
+//     renderPagination(currentFiltered.length);
+//   }
+
+//   function updateStats(list) {
+//     if (statTotal) statTotal.textContent = list.length;
+
+//     const ptCount = list.filter((t) => {
+//       const d = (t.discipline || "").toUpperCase();
+//       return d.includes("PT") || d.includes("PTA");
+//     }).length;
+//     if (statPt) statPt.textContent = ptCount;
+
+//     const otCount = list.filter((t) => {
+//       const d = (t.discipline || "").toUpperCase();
+//       return d.includes("OT") || d.includes("COTA");
+//     }).length;
+//     if (statOt) statOt.textContent = otCount;
+
+//     const stCount = list.filter((t) => {
+//       const d = (t.discipline || "").toUpperCase();
+//       return d.includes("ST") || d.includes("SLP");
+//     }).length;
+//     if (statSt) statSt.textContent = stCount;
+//   }
+
+//   function applyFilters() {
+//     const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
+//     const selectedDisc = disciplineFilter ? disciplineFilter.value.toUpperCase() : "ALL";
+
+//     currentFiltered = allTherapists.filter((t) => {
+//       const disc = (t.discipline || "").toUpperCase();
+//       const matchesDisc =
+//         selectedDisc === "ALL" ||
+//         disc === selectedDisc ||
+//         (selectedDisc === "ST" && (disc.includes("ST") || disc.includes("SLP"))) ||
+//         (selectedDisc === "PT" && disc === "PT") ||
+//         (selectedDisc === "PTA" && disc === "PTA") ||
+//         (selectedDisc === "OT" && disc === "OT") ||
+//         (selectedDisc === "COTA" && disc === "COTA") ||
+//         (selectedDisc === "MSW" && (disc.includes("MSW") || disc.includes("SOCIAL")));
+
+//       const matchesQuery =
+//         !query ||
+//         t.name?.toLowerCase().includes(query) ||
+//         t.email?.toLowerCase().includes(query) ||
+//         t.phone?.toLowerCase().includes(query) ||
+//         t.city?.toLowerCase().includes(query) ||
+//         t.state?.toLowerCase().includes(query) ||
+//         t.zip?.toLowerCase().includes(query) ||
+//         t.address?.toLowerCase().includes(query) ||
+//         t.discipline?.toLowerCase().includes(query) ||
+//         t.id?.toLowerCase().includes(query);
+
+//       return matchesDisc && matchesQuery;
+//     });
+
+//     currentPage = 1;
+//     renderCurrentPage();
+//   }
+
+//   async function loadAgencyInfo() {
+//     try {
+//       const res = await fetch(API_ME, { credentials: "include" });
+//       if (res.status === 401 || res.status === 403) {
+//         window.location.href = "index.html?error=" + encodeURIComponent("Please sign in to continue");
+//         return;
+//       }
+//     } catch (e) {
+//       console.warn("Failed to load agency session", e);
+//     }
+//   }
+
+//   async function loadTherapists() {
+//     if (tableLoading) tableLoading.hidden = false;
+//     if (tableError) tableError.hidden = true;
+//     if (tableEmpty) tableEmpty.hidden = true;
+//     if (tableWrapper) tableWrapper.hidden = true;
+//     if (paginationContainer) paginationContainer.hidden = true;
+
+//     if (refreshBtn) {
+//       refreshBtn.classList.add("loading");
+//     }
+
+//     try {
+//       const response = await fetch(API_THERAPISTS, {
+//         credentials: "include",
+//         headers: { Accept: "application/json" },
+//       });
+
+//       if (response.status === 401 || response.status === 403) {
+//         window.location.href = "index.html?error=" + encodeURIComponent("Please sign in to continue");
+//         return;
+//       }
+
+//       if (!response.ok) {
+//         const payload = await response.json().catch(() => ({}));
+//         throw new Error(payload.message || "Unable to load therapist records");
+//       }
+
+//       const data = await response.json();
+//       allTherapists = data.therapists || [];
+
+//       updateStats(allTherapists);
+//       applyFilters();
+//     } catch (err) {
+//       if (tableError) tableError.hidden = false;
+//       if (errorMessage) errorMessage.textContent = err.message || "Failed to load therapist records";
+//     } finally {
+//       if (tableLoading) tableLoading.hidden = true;
+//       if (refreshBtn) {
+//         refreshBtn.classList.remove("loading");
+//       }
+//     }
+//   }
+
+//   function formatCredentialsResponseAlert(payload, fallbackCount) {
+//     const check = payload.credentialCheck;
+//     const available = check && Array.isArray(check.availableTherapists) ? check.availableTherapists : [];
+//     const missing = check && Array.isArray(check.missingTherapists) ? check.missingTherapists : [];
+
+//     function resolveTherapistName(t) {
+//       if (t.name && t.name !== "Unknown Therapist" && t.name !== "Therapist") {
+//         return t.name;
+//       }
+//       const match = allTherapists.find((item) => String(item.id) === String(t.id));
+//       return match ? match.name : (t.name || "Therapist");
+//     }
+
+//     const availableNames = available.map(resolveTherapistName).join(", ");
+//     const missingNames = missing.map(resolveTherapistName).join(", ");
+//     const missingNamesQuoted = missing.map((t) => `“${resolveTherapistName(t)}”`).join(", ");
+
+//     const status = payload.credentialStatus || payload.status || (
+//       available.length > 0 && missing.length === 0 ? "SUCCESS" :
+//         available.length === 0 && missing.length > 0 ? "NO_DOCUMENTS" :
+//           available.length > 0 && missing.length > 0 ? "PARTIAL_SUCCESS" : "SUCCESS"
+//     );
+
+//     // NEW UPDATE
+//     // System/API errors must take priority over success fallbacks.
+//     if (status === "ERROR") {
+//       return {
+//         type: "error",
+//         isHtml: false,
+//         duration: 14000,
+//         content:
+//           payload.credentialMessage ||
+//           payload.message ||
+//           "Unable to verify credential documents. Please try again."
+//       };
+//     }
+
+//     // NEW UPDATES
+
+//     // 1. All Successful
+//     // if (status === "SUCCESS" || (available.length > 0 && missing.length === 0)) {
+//     if (status === "SUCCESS") {
+//       const messageText = payload.credentialMessage || `Email sent successfully of the selected therapist : ${availableNames || "selected therapist(s)"}`;
+
+//       return {
+//         type: "success",
+//         isHtml: true,
+//         duration: 9000,
+//         content: `
+//           <div class="toast-section">
+//             <div class="toast-header-row" style="align-items: flex-start; gap: 0.65rem;">
+//               <span class="toast-header-icon toast-header-icon-success" style="margin-top: 2px;">
+//                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+//                   <circle cx="12" cy="12" r="10"></circle>
+//                   <polyline points="16 9 10 15 7 12"></polyline>
+//                 </svg>
+//               </span>
+//               <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+//                 <span class="toast-header-title" style="font-weight: 600; font-size: 0.92rem; line-height: 1.45; color: #1e293b;">
+//                   ${escapeHtml(messageText)}
+//                 </span>
+//               </div>
+//             </div>
+//           </div>
+//         `,
+//       };
+//     }
+
+//     // 2. Missing Documents / None sent
+//     // if (status === "NO_DOCUMENTS" || (available.length === 0 && missing.length > 0)) {
+//     if (status === "NO_DOCUMENTS") {
+//       // const messageText = payload.credentialMessage || (missing.length === 1
+//       //   ? "The credential document for this therapist is currently unavailable. Our team has been notified and will follow up."
+//       //   : "The credential documents for these therapists are currently unavailable. Our team has been notified and will follow up.");
+
+//       const therapistNames = missing.map(resolveTherapistName).join(", ");
+
+//       const messageText = payload.credentialMessage || payload.message || (missing.length === 1
+//         ? `The credential document for ${therapistNames} therapist is currently unavailable. Our team has been notified and will follow up.`
+//         : `The credential documents for ${therapistNames} therapists are currently unavailable. Our team has been notified and will follow up.`);
+
+//       return {
+//         type: "error",
+//         isHtml: true,
+//         duration: 14000,
+//         content: `
+//           <div class="toast-section">
+//             <div class="toast-header-row" style="align-items: flex-start; gap: 0.65rem;">
+//               <span class="toast-header-icon toast-header-icon-error" style="margin-top: 2px;">
+//                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+//                   <circle cx="12" cy="12" r="10"></circle>
+//                   <line x1="12" y1="8" x2="12" y2="12"></line>
+//                   <line x1="12" y1="16" x2="12.01" y2="16"></line>
+//                 </svg>
+//               </span>
+//               <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+//                 <span class="toast-header-title" style="font-weight: 600; font-size: 0.92rem; line-height: 1.45; color: #1e293b;">
+//                   ${escapeHtml(messageText)}
+//                 </span>
+//               </div>
+//             </div>
+//           </div>
+//         `,
+//       };
+//     }
+
+//     // 3. Partial Success / Mixed
+//     // if (status === "PARTIAL_SUCCESS" || (available.length > 0 && missing.length > 0)) {
+//     if (status === "PARTIAL_SUCCESS") {
+
+//       const agencyName = payload.agencyName || "Agency";
+
+//       const messageText = payload.credentialMessage || payload.message ||
+//         `Email sent successfully to the agency ${agencyName} for the following therapist(s): ${availableNames}. However, no credential documents were found for: ${missingNames}.`;
+
+//       return {
+//         type: "warning",
+//         isHtml: true,
+//         duration: 14000,
+//         content: `
+//           <div class="toast-section">
+//             <div class="toast-header-row" style="align-items: flex-start; gap: 0.65rem;">
+//               <span class="toast-header-icon toast-header-icon-error" style="margin-top: 2px;">
+//                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+//                   <circle cx="12" cy="12" r="10"></circle>
+//                   <line x1="12" y1="8" x2="12" y2="12"></line>
+//                   <line x1="12" y1="16" x2="12.01" y2="16"></line>
+//                 </svg>
+//               </span>
+//               <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+//                 <span class="toast-header-title" style="font-weight: 600; font-size: 0.92rem; line-height: 1.45; color: #1e293b;">
+//                   ${escapeHtml(messageText)}
+//                 </span>
+
+//               </div>
+//             </div>
+//           </div>
+//         `,
+//       };
+//     }
+
+//     return {
+//       type: "error",
+//       isHtml: false,
+//       duration: 8000,
+//       content: payload.credentialMessage || payload.message || "Unable to complete the credential request.",
+//     };
+//   }
+
+//   async function handleSendCredentials() {
+//     if (selectedTherapistIds.size === 0) {
+//       showAlert("error", "Please select at least one therapist to send credentials.");
+//       return;
+//     }
+
+//     const therapistIds = Array.from(selectedTherapistIds);
+//     const count = therapistIds.length;
+
+//     if (sendCredentialsBtn) {
+//       sendCredentialsBtn.disabled = true;
+//       const btnSpan = sendCredentialsBtn.querySelector("span");
+//       if (btnSpan) btnSpan.textContent = "Sending…";
+//     }
+
+//     hideAlert();
+
+//     try {
+//       const res = await fetch(API_SEND_CREDENTIALS, {
+//         method: "POST",
+//         credentials: "include",
+//         headers: {
+//           Accept: "application/json",
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({ therapistIds }),
+//       });
+
+//       const payload = await res.json().catch(() => ({}));
+
+//       if (res.status === 401 || res.status === 403) {
+//         window.location.href = "index.html?error=" + encodeURIComponent("Please sign in to continue");
+//         return;
+//       }
+
+//       if (!res.ok) {
+//         const errorMsg =
+//           payload.message ||
+//           (payload.details && typeof payload.details === "object"
+//             ? payload.details.message || JSON.stringify(payload.details)
+//             : null) ||
+//           `Server returned error status ${res.status}`;
+//         throw new Error(errorMsg);
+//       }
+
+//       // const alertInfo = formatCredentialsResponseAlert(payload, count);
+//       // showAlert(alertInfo.type, alertInfo.content, alertInfo.isHtml, alertInfo.duration);
+
+//       const alertInfo = formatCredentialsResponseAlert(payload, count);
+
+//       showAlert(
+//         alertInfo.type,
+//         alertInfo.content,
+//         alertInfo.isHtml,
+//         alertInfo.duration
+//       );
+
+//       console.log("[send-credentials] Dispatch completed:", {
+//         status: payload.status,
+//         ownerNotification: payload.ownerNotification,
+//         agencyStatusNotification: payload.agencyStatusNotification
+//       });
+
+//       // Clear selection after successful transmission
+//       selectedTherapistIds.clear();
+//       updateSelectionUI();
+//     } catch (err) {
+//       showAlert("error", err.message || "An error occurred while sending credentials.");
+//     } finally {
+//       if (sendCredentialsBtn) {
+//         const btnSpan = sendCredentialsBtn.querySelector("span");
+//         if (btnSpan) btnSpan.textContent = "Send Credentials";
+//         updateSelectionUI();
+//       }
+//     }
+//   }
+
+//   // Events
+//   if (searchInput) {
+//     searchInput.addEventListener("input", applyFilters);
+//   }
+
+//   if (disciplineFilter) {
+//     disciplineFilter.addEventListener("change", applyFilters);
+//   }
+
+//   if (refreshBtn) {
+//     refreshBtn.addEventListener("click", loadTherapists);
+//   }
+
+//   if (retryBtn) {
+//     retryBtn.addEventListener("click", loadTherapists);
+//   }
+
+//   if (sendCredentialsBtn) {
+//     sendCredentialsBtn.addEventListener("click", handleSendCredentials);
+//   }
+
+//   if (actionAlert) {
+//     actionAlert.addEventListener("click", (e) => {
+//       // If clicking out of the message (on the backdrop), close it
+//       if (e.target === actionAlert) {
+//         hideAlert();
+//       }
+//     });
+//   }
+
+//   if (actionAlertClose) {
+//     actionAlertClose.addEventListener("click", hideAlert);
+//   }
+
+//   document.addEventListener("keydown", (e) => {
+//     if (e.key === "Escape" && actionAlert && !actionAlert.hidden) {
+//       hideAlert();
+//     }
+//   });
+
+//   // Select All on current page
+//   if (selectAllCheckbox) {
+//     selectAllCheckbox.addEventListener("change", (e) => {
+//       const pageTherapists = getCurrentPageTherapists();
+//       if (e.target.checked) {
+//         pageTherapists.forEach((t) => selectedTherapistIds.add(t.id));
+//       } else {
+//         pageTherapists.forEach((t) => selectedTherapistIds.delete(t.id));
+//       }
+//       updateSelectionUI();
+//     });
+//   }
+
+//   if (firstPageBtn) {
+//     firstPageBtn.addEventListener("click", () => goToPage(1));
+//   }
+
+//   if (prevPageBtn) {
+//     prevPageBtn.addEventListener("click", () => goToPage(currentPage - 1));
+//   }
+
+//   if (nextPageBtn) {
+//     nextPageBtn.addEventListener("click", () => {
+//       const totalPages = Math.max(1, Math.ceil(currentFiltered.length / PAGE_SIZE));
+//       goToPage(currentPage + 1);
+//     });
+//   }
+
+//   if (lastPageBtn) {
+//     lastPageBtn.addEventListener("click", () => {
+//       const totalPages = Math.max(1, Math.ceil(currentFiltered.length / PAGE_SIZE));
+//       goToPage(totalPages);
+//     });
+//   }
+
+
+
+//   // Initialize
+//   loadAgencyInfo();
+//   loadTherapists();
+// })();

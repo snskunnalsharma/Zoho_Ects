@@ -1,0 +1,24 @@
+{
+  "deployment": {
+    "name": "agency_api",
+    "stack": "node20",
+    "type": "advancedio",
+    "env_variables": {
+      "ZOHO_CLIENT_ID": "1000.ZOSLULS4FWEXYNBDG138KIMEBQ5RVI",
+      "ZOHO_CLIENT_SECRET": "6b956e45a2869699884763700fbc62a8e885e13b90",
+      "ZOHO_REFRESH_TOKEN": "1000.fb906618cd59fec5416987bf82b3ae0f.85721620ebd0f9995add20331416aa36",
+      "ZOHO_ACCOUNTS_HOST": "https://accounts.zoho.com",
+      "ZOHO_CRM_API_HOST": "www.zohoapis.com",
+      "ZOHO_AGENCY_MODULE": "Accounts",
+      "ZOHO_AGENCY_EMAIL_FIELD": "Portal_Access_Email",
+      "ZOHO_FIELD_AGENCY_NAME": "Agency_Name",
+      "ZOHO_FIELD_PORTAL_EMAIL": "Portal_Access_Email",
+      "ZOHO_FIELD_CREDENTIAL": "Credential",
+      "ZOHO_FIELD_RESET_API_LINK": "Reset",
+      "ZOHO_FORM_EMBED_URL": "https://forms.zohopublic.com/eaglecreektherapyservices/form/PatientReferralForm/formperma/Iv84Mm6yJ1Q6qjJctjoYY2zmmB0t7_YjncLn10nlbBs"
+    }
+  },
+  "execution": {
+    "main": "index.js"
+  }
+}
